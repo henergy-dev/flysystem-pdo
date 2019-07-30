@@ -37,7 +37,7 @@ class PdoAdapter implements AdapterInterface
     {
         $this->db = $db;
 
-        if ($config === null) {
+		if ($config === null) {
             $config = new Config;
         }
         $defaultPrefix = 'flysystem';
@@ -57,9 +57,9 @@ class PdoAdapter implements AdapterInterface
         $this->pathTable  = "{$tablePrefix}_path";
         $this->chunkTable = "{$tablePrefix}_chunk";
 
-        if ($config->get('disable_mysql_buffering')) {
-            $this->db->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
-        }
+        // if ($config->get('disable_mysql_buffering')) {
+        //     $this->db->setAttribute(\PDO::MYSQL_ATTR_USE_BUFFERED_QUERY, false);
+        // }
     }
 
     /**
@@ -357,7 +357,8 @@ class PdoAdapter implements AdapterInterface
      */
     public function has($path)
     {
-        $select = "SELECT 1 FROM {$this->pathTable} WHERE path = :path LIMIT 1";
+        //$select = "SELECT 1 FROM {$this->pathTable} WHERE path = :path LIMIT 1";
+        $select = "SELECT TOP 1 1 FROM {$this->pathTable} WHERE path = :path";
         $stmt   = $this->db->prepare($select);
         if (!$stmt->execute(['path' => $path])) {
             return false;
@@ -515,7 +516,8 @@ class PdoAdapter implements AdapterInterface
      */
     protected function findPathData($path)
     {
-        $select = "SELECT * FROM {$this->pathTable} WHERE path = :path LIMIT 1";
+        //$select = "SELECT * FROM {$this->pathTable} WHERE path = :path LIMIT 1";
+        $select = "SELECT TOP 1 * FROM {$this->pathTable} WHERE path = :path";
         $stmt   = $this->db->prepare($select);
         if (!$stmt->execute(['path' => $path])) {
             return false;
@@ -691,7 +693,8 @@ class PdoAdapter implements AdapterInterface
         }
 
         $insert = "INSERT INTO {$this->chunkTable} (path_id, chunk_no, content) VALUES";
-        $insert .= " (:path_id, :chunk_no, :content)";
+        // $insert .= " (:path_id, :chunk_no, :content)";
+        $insert .= " (:path_id, :chunk_no, CONVERT(VARBINARY(MAX), :content))";
 
         $stmt      = $this->db->prepare($insert);
         $chunk     = 0;
@@ -702,6 +705,7 @@ class PdoAdapter implements AdapterInterface
             if ($content == '' || bin2hex($content) == '0300') {
                 continue;
             }
+
             $stmt->execute([
                 'path_id'  => $pathId,
                 'chunk_no' => $chunk++,
