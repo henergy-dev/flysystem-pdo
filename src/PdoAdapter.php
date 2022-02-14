@@ -493,8 +493,6 @@ class PdoAdapter implements FilesystemAdapter
 
 	protected function convertToFileAttribute($data)
     {
-		dump($data);
-
 		return new FileAttributes(
             $data['path'],
             $data['size'],
